@@ -1,0 +1,82 @@
+name: RotleinPriority-TaskPane
+description: save connection settings
+host: EXCEL
+api_set: {}
+script:
+  content: |
+    async function saveSettings() {
+      const url = (document.getElementById("url") as HTMLInputElement).value;
+      const company = (document.getElementById("company") as HTMLInputElement).value;
+      const tabulaIni = (document.getElementById("tabulaIni") as HTMLInputElement).value;
+      const apiUser = (document.getElementById("apiUser") as HTMLInputElement).value;
+      const apiPassword = (document.getElementById("apiPassword") as HTMLInputElement).value;
+
+      try {
+        const response = await fetch("https://e943-185-83-220-186.ngrok-free.app/saveSettings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ url, company, tabulaIni, apiUser, apiPassword })
+        });
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const data = await response.json();
+        console.log("Settings saved successfully:", data);
+      } catch (error) {
+        console.error("Error saving settings:", error);
+      }
+    }
+  language: typescript
+template:
+  content: "<h2>Connection Settings</h2>\n<div>\n\t<label for=\"url\">API URL:</label>\n\t<input type=\"text\" id=\"url\" value=\"https://rotleintest.wee.co.il:8443/odata/Priority\"><br>\n\n\t<label for=\"company\">Company:</label>\n\t<input type=\"text\" id=\"company\" value=\"demo\"><br>\n\n\t<label for=\"tabulaIni\">Tabula INI:</label>\n\t<input type=\"text\" id=\"tabulaIni\" value=\"tabula.ini\"><br>\n\n\t<label for=\"apiUser\">API User:</label>\n\t<input type=\"text\" id=\"apiUser\" value=\"api2021\"><br>\n\n\t<label for=\"apiPassword\">API Password:</label>\n\t<input type=\"password\" id=\"apiPassword\" value=\"Aa123456\"><br>\n\t<button id=\"saveSettings\" onclick=\"saveSettings()\">Save Settings</button>\n</div>"
+  language: html
+style:
+  content: |-
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      
+      h2 {
+        font-size: 24px;
+      }
+      
+      label {
+        display: inline-block;
+        width: 100px;
+        margin-bottom: 10px;
+      }
+      
+      input {
+        margin-bottom: 10px;
+      }
+      
+      button {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #0078d4;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      
+  language: css
+libraries: |+
+  https://appsforoffice.microsoft.com/lib/1/hosted/office.js
+  @types/office-js
+
+  office-ui-fabric-js@1.4.0/dist/css/fabric.min.css
+  office-ui-fabric-js@1.4.0/dist/css/fabric.components.min.css
+
+  core-js@2.4.1/client/core.min.js
+  @types/core-js
+
+  jquery@3.1.1
+  @types/jquery@3.3.1
+
+  https://appsforoffice.microsoft.com/lib/1/hosted/office.js
+  https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js

@@ -1,77 +1,46 @@
 name: Formulas
-description: Formulas
+description: Formulas for fetching open order amounts for customers
 host: EXCEL
 api_set: {}
 script:
   content: |
-    async function saveSettings() {
-      const url = (document.getElementById("url") as HTMLInputElement).value;
-      const username = (document.getElementById("username") as HTMLInputElement).value;
-      const password = (document.getElementById("password") as HTMLInputElement).value;
-
-      try {
-        const response = await fetch("https://e943-185-83-220-186.ngrok-free.app/saveSettings", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ url, username, password })
-        });
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const data = await response.json();
-        console.log("Settings saved successfully:", data);
-      } catch (error) {
-        console.error("Error saving settings:", error);
-      }
-    }
-
     /**
-     * הפונקציה מבצעת פנייה לשרת ה-Node.js עם הנתונים מה-Taskpane והפרמטרים שקיבלנו מהפונקציה באקסל.
+     * הפונקציה מחזירה סכום הזמנות פתוחות ללקוח עבור תקופה של חודשים
      * @customfunction
+     * @param {string} rotl - FIXED ROTL - FOR CONNECTION CELL DATA
+     * @param {string} cmp - שם החברה בפורמט cmpX_CompanyName
      * @param {number} year - השנה לקבלת ההזמנות.
      * @param {number} month - החודש לקבלת ההזמנות.
-     * @param {string} custName - מספר הלקוח.
-     * @returns {Promise<number>} - מחזירה את סכום ההזמנות ללקוח בתקופה.
+     * @param {string} custName - מספר הלקוח המשורשר.
+     * @returns {Promise<number | string>} - מחזירה את סכום ההזמנות ללקוח בתקופה או הודעת שגיאה במקרה של כשל.
      */
-    async function ROTL_GET_AMMOUNT_ORDERS(year, month, custName) {
-      // שליפת ההגדרות מה-Taskpane
-      const url = Office.context.document.settings.get("apiUrl");
-      const username = Office.context.document.settings.get("apiUsername");
-      const password = Office.context.document.settings.get("apiPassword");
-
+    async function ROTL_GET_AMMOUNT_ORDERS(rotl, cmp, year, month, custName) {
       try {
-        // שליחת הנתונים ל-Node.js
-        const response = await fetch("https://e943-185-83-220-186.ngrok-free.app/getOrders", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            year: year,
-            month: month,
-            custName: custName,
-            apiUrl: url,
-            apiUsername: username,
-            apiPassword: password
-          })
-        });
+        // שליחת בקשת GET לשרת ה-NODEJS עם כל הפרמטרים
+        const response = await fetch(
+          `https://exceladdon.cloudline.co.il/getOrders?year=${year}&month=${month}&custName=${custName}&url=${
+            rotl.split(",")[0]
+          }&company=${cmp}&tabulaIni=${rotl.split(",")[1]}&apiUser=${rotl.split(",")[2]}&apiPassword=${rotl.split(",")[3]}`,
+          {
+            method: "GET"
+          }
+        );
 
-        // בדיקה אם התשובה תקינה
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
 
         const data = await response.json();
 
-        // החזרת סכום ההזמנות
-        return data.totalOrders;
+        // בדיקת תקינות התוצאה שהתקבלה
+        if (data && typeof data.totalOrders === "number") {
+          return data.totalOrders; // החזרת סכום ההזמנות
+        } else {
+          throw new Error("נתונים לא תקינים התקבלו מהשרת.");
+        }
       } catch (error) {
         console.error("Error fetching order data:", error);
-        return 0; // מחזיר 0 במקרה של שגיאה
+        return "שגיאת תקשורת או נתונים"; // הודעת שגיאה במקרה של כשל
       }
     }
   language: typescript
@@ -89,5 +58,3 @@ libraries: |
   @types/jquery@3.3.1
 
   https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js
-
-  https://appsforoffice.microsoft.com/lib/1/hosted/office.js
